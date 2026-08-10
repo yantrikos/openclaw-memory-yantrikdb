@@ -1,0 +1,79 @@
+{
+  "id": "memory-yantrikdb",
+  "name": "Memory (YantrikDB)",
+  "version": "0.1.0",
+  "description": "YantrikDB-backed long-term memory: semantic recall with retrieval reasons, conflict-aware session briefings, auto-capture. Talks to a YantrikDB server over HTTP only.",
+  "kind": "memory",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "baseUrl": {
+        "type": "string",
+        "description": "YantrikDB HTTP gateway URL. Defaults to http://127.0.0.1:7438 (or YANTRIKDB_URL)."
+      },
+      "apiKey": {
+        "type": "string",
+        "description": "Bearer token for the YantrikDB gateway. Falls back to YANTRIKDB_API_KEY."
+      },
+      "namespace": {
+        "type": "string",
+        "description": "Namespace that scopes this agent's memories inside YantrikDB. Default: openclaw."
+      },
+      "domain": {
+        "type": "string",
+        "description": "Default domain tag for stored memories. Default: general."
+      },
+      "autoRecall": {
+        "type": "boolean",
+        "description": "Inject a memory briefing into the prompt at session start. Default: true."
+      },
+      "autoCapture": {
+        "type": "boolean",
+        "description": "Capture durable facts from conversations automatically. Default: true."
+      },
+      "injectSessionDigest": {
+        "type": "boolean",
+        "description": "Use YantrikDB's session digest (open decisions, unresolved conflicts, pending triggers) as the boot briefing. Default: true."
+      },
+      "recallLimit": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 50,
+        "description": "Default number of results for memory_recall. Default: 5."
+      },
+      "timeoutMs": {
+        "type": "integer",
+        "minimum": 250,
+        "maximum": 60000,
+        "description": "Per-request timeout in milliseconds. Default: 4000."
+      },
+      "captureImportance": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1,
+        "description": "Importance assigned to auto-captured memories. Default: 0.4."
+      },
+      "maxContextChars": {
+        "type": "integer",
+        "minimum": 200,
+        "maximum": 20000,
+        "description": "Upper bound on injected briefing size. Default: 2400."
+      }
+    }
+  },
+  "uiHints": {
+    "baseUrl": {
+      "label": "YantrikDB URL",
+      "placeholder": "http://127.0.0.1:7438"
+    },
+    "apiKey": {
+      "label": "API key",
+      "sensitive": true
+    },
+    "namespace": {
+      "label": "Namespace",
+      "placeholder": "openclaw"
+    }
+  }
+}
