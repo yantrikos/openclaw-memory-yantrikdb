@@ -125,6 +125,32 @@ solid. This plugin earns its keep when you want memory that survives
 contradiction (conflict detection), spans multiple agents/tools (shared
 substrate over MCP + HTTP), or needs revision history instead of overwrites.
 
+## Host configuration that trips people up
+
+Two OpenClaw host policies (verified on 2026.7.1-2) will silently limit the
+plugin if unset:
+
+- **Auto-capture needs conversation access.** Non-bundled plugins are denied
+  conversation history by default, which blocks the `agent_end` capture hook.
+  Enable it in your OpenClaw config:
+
+  ```jsonc
+  {
+    "plugins": {
+      "entries": {
+        "memory-yantrikdb": { "hooks": { "allowConversationAccess": true } }
+      }
+    }
+  }
+  ```
+
+- **Tool profiles can hide the tools.** With `tools.profile` set to
+  `coding`, `messaging`, or `minimal`, plugin tools are excluded from the
+  model entirely. Use profile `full` or add `memory_recall` /
+  `memory_store` / `memory_forget` to `alsoAllow`.
+
+Recall and the session briefing work without either setting; these only
+gate auto-capture and tool visibility.
 ## Development
 
 ```bash

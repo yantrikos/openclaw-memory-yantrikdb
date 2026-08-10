@@ -134,9 +134,10 @@ declare module "openclaw/plugin-sdk/plugin-entry" {
 }
 
 declare module "openclaw/plugin-sdk/routing" {
-  export function isIncognitoSessionKey(
-    sessionKey: string | undefined,
-  ): boolean;
+  // NOTE: verified against the real OpenClaw 2026.7.1-2 host
+  // (dist/plugin-sdk/routing.d.ts). `isIncognitoSessionKey` is NOT
+  // exported by the real host and must not be declared here — importing
+  // it type-checks but crashes at runtime inside the host.
   export function normalizeAgentId(
     agentId: string | undefined,
   ): string | undefined;

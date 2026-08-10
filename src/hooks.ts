@@ -1,5 +1,18 @@
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk/plugin-entry";
-import { isIncognitoSessionKey } from "openclaw/plugin-sdk/routing";
+
+/**
+ * Local incognito heuristic. The real OpenClaw host (verified against
+ * 2026.7.1-2) does NOT export `isIncognitoSessionKey` from
+ * `openclaw/plugin-sdk/routing` — importing it crashed every hook at
+ * runtime ("isIncognitoSessionKey is not a function") during the
+ * 2026-08-09 live smoke test. Current OpenClaw has no incognito session
+ * concept in its plugin SDK, so this conservative local check is used
+ * instead: skip capture for any session key that self-describes as
+ * incognito, and never crash the hook chain.
+ */
+const isIncognitoSessionKey = (sessionKey: string | undefined): boolean =>
+  typeof sessionKey === "string" &&
+  sessionKey.toLowerCase().includes("incognito");
 import type { YantrikDbClient } from "./client.js";
 import type { ResolvedConfig } from "./config.js";
 import { buildSessionSummary, extractRoleTexts, fnv1a } from "./capture.js";

@@ -4,6 +4,13 @@
   "version": "0.1.0",
   "description": "YantrikDB-backed long-term memory: semantic recall with retrieval reasons, conflict-aware session briefings, auto-capture. Talks to a YantrikDB server over HTTP only.",
   "kind": "memory",
+  "contracts": {
+    "tools": [
+      "memory_recall",
+      "memory_store",
+      "memory_forget"
+    ]
+  },
   "configSchema": {
     "type": "object",
     "additionalProperties": false,
