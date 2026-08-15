@@ -95,7 +95,20 @@ function digestEntryText(entry: unknown): string | undefined {
   }
   if (entry && typeof entry === "object") {
     const record = entry as Record<string, unknown>;
-    for (const key of ["text", "snippet", "summary", "title", "question"]) {
+    // DigestConflict has no text field at all — its shape is
+    // {conflict_id, conflict_type, memory_a, memory_b, priority}. Render
+    // it honestly rather than skipping it silently.
+    if (typeof record.conflict_type === "string" && record.memory_a) {
+      const a = String(record.memory_a).slice(0, 8);
+      const b = String(record.memory_b ?? "?").slice(0, 8);
+      return `${record.conflict_type} conflict between memories ${a}… and ${b}…`;
+    }
+    // Key list matches the SERVER's real shapes (verified against
+    // http_gateway + engine digest.rs on 2026-08-15): decisions/stale use
+    // `snippet`, triggers use `reason`, knowledge gaps use `query`. The
+    // original list was written against an invented response and rendered
+    // nothing — while the unit tests certified the same invention.
+    for (const key of ["text", "snippet", "summary", "reason", "query", "title", "question"]) {
       const value = record[key];
       if (typeof value === "string" && value.trim().length > 0) {
         return value.trim();
@@ -151,13 +164,13 @@ export function formatSessionDigest(
   const blocks = [
     digestSection(
       digest,
-      ["open_decisions", "decisions"],
+      ["top_decisions", "open_decisions", "decisions"],
       "Open decisions",
       5,
     ),
     digestSection(
       digest,
-      ["unresolved_conflicts", "conflicts"],
+      ["open_conflicts", "unresolved_conflicts", "conflicts"],
       "Unresolved conflicts (do not assert these as settled)",
       4,
     ),

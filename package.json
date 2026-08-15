@@ -54,7 +54,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "tsc -p tsconfig.test.json && node --test \"dist-test/test/*.test.js\"",
     "clean": "node -e \"fs.rmSync('dist',{recursive:true,force:true});fs.rmSync('dist-test',{recursive:true,force:true})\"",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "prepack": "npm run build"
   },
   "dependencies": {
     "typebox": "^1.3.6"

@@ -105,11 +105,22 @@ export function registerMemoryHooks(
       try {
         const digest = await client.sessionDigest({
           namespace: cfg.namespace,
+          // scope isolates decisions/conflicts/gaps to this namespace —
+          // `namespace` alone scopes ONLY the narrative chain, so without
+          // scope the briefing would inject OTHER agents' decisions and
+          // conflicts into this agent's prompt (cross-tenant context leak,
+          // masked until 2026-08-15 only by the formatter rendering
+          // nothing at all).
+          scope: cfg.namespace,
           includeGaps: true,
         });
         state.digestText = formatSessionDigest(digest, cfg.maxContextChars);
       } catch (error) {
         state.digestText = undefined;
+        // Do not negative-cache a transient failure for the full TTL: one
+        // timeout at session start was suppressing the briefing for 5
+        // minutes after the server recovered.
+        state.digestAt = 0;
         warn(
           `session digest unavailable: ${
             error instanceof Error ? error.message : String(error)
@@ -133,17 +144,37 @@ export function registerMemoryHooks(
     const fresh = allTexts.slice(state.captureCursor);
     state.captureCursor = allTexts.length;
 
-    let captured = 0;
+    // Failure ordering rebuilt (2026-08-15 audit): the old loop marked the
+    // hash captured BEFORE the write (a failed write was never retried),
+    // broke out on first error AFTER the cursor had advanced (the rest of
+    // the batch vanished from both the store and the summary), and the
+    // per-run quota also skipped summaryParts. Now: every fresh text
+    // reaches summaryParts unconditionally; hashes are marked only on
+    // successful write; a failed batch rewinds nothing it hasn't secured.
     for (const text of fresh) {
-      if (captured >= MAX_CAPTURES_PER_RUN) {
-        break;
+      const hash = fnv1a(text);
+      if (!state.capturedHashes.has(hash)) {
+        state.summaryParts.push(text);
+      }
+    }
+    let captured = 0;
+    for (let i = 0; i < fresh.length; i += 1) {
+      // noUncheckedIndexedAccess: the index is loop-bounded, but the type
+      // system can't see it — skip the impossible undefined explicitly.
+      const text = fresh[i];
+      if (text === undefined) {
+        continue;
       }
       const hash = fnv1a(text);
       if (state.capturedHashes.has(hash)) {
         continue;
       }
-      state.capturedHashes.add(hash);
-      state.summaryParts.push(text);
+      if (captured >= MAX_CAPTURES_PER_RUN) {
+        // Quota hit: rewind the cursor so the remainder is genuinely
+        // "fresh" next run instead of silently skipped forever.
+        state.captureCursor -= fresh.length - i;
+        break;
+      }
       try {
         await client.remember({
           text,
@@ -157,10 +188,14 @@ export function registerMemoryHooks(
             ? { idempotency_key: `openclaw:${sessionKey}:${hash}` }
             : {}),
         });
+        state.capturedHashes.add(hash);
         captured += 1;
       } catch (error) {
+        // Rewind to THIS text: "retry next run" must be literally true,
+        // not a hope — the cursor had already sailed past the failures.
+        state.captureCursor -= fresh.length - i;
         warn(
-          `auto-capture failed: ${
+          `auto-capture failed (will retry next run): ${
             error instanceof Error ? error.message : String(error)
           }`,
         );
