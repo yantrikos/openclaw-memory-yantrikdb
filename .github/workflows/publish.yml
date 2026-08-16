@@ -1,0 +1,56 @@
+name: Publish to npm
+
+# Same convention as yantrikdb-mcp and yantrikdb-hermes-plugin: a git tag
+# alone publishes nothing; creating the GitHub Release is the trigger.
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+  id-token: write # npm provenance attestation
+
+jobs:
+  # Re-run the matrix on the tagged commit — never trust that whoever cut
+  # the release checked CI on main first.
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        node: [20, 22]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npm test
+
+  publish:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+          cache: npm
+      - run: npm ci
+      # prepack runs the build, so the tarball can never ship a stale dist/.
+      # --access public: scoped packages default to restricted, which fails
+      # the publish outright on a free org — state the intent explicitly.
+      - run: npm publish --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      # The version we just published must be the version the release names —
+      # a mismatch here means the tag and package.json drifted.
+      - run: |
+          PKG=$(node -p "require('./package.json').version")
+          TAG="${{ github.event.release.tag_name }}"
+          if [ "v$PKG" != "$TAG" ] && [ "$PKG" != "$TAG" ]; then
+            echo "package.json says $PKG but the release is $TAG"; exit 1
+          fi
