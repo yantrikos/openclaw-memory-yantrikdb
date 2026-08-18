@@ -171,7 +171,7 @@ The same memory engine, wired into other places an agent lives:
   engine this plugin talks to: Rust, self-hosted, HTTP + cluster.
 - [yantrikdb-mcp](https://github.com/yantrikos/yantrikdb-mcp) — the same
   memory as an MCP server for Claude Code, Cursor and Windsurf.
-- [langchain-yantrikdb](https://github.com/spranab/langchain-yantrikdb) — as a
+- [langchain-yantrikdb](https://github.com/yantrikos/langchain-yantrikdb) — as a
   LangChain `VectorStore` and `ChatMessageHistory`.
 - [yantrik-memory](https://github.com/yantrikos/yantrik-memory) —
   framework-agnostic Python memory layer built on the same engine.
