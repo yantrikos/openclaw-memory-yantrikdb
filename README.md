@@ -163,6 +163,21 @@ The `openclaw/plugin-sdk/*` modules are provided by the OpenClaw host at
 runtime; `types/openclaw-plugin-sdk.d.ts` carries minimal structural
 declarations so the package typechecks and tests standalone.
 
+## Related projects
+
+The same memory engine, wired into other places an agent lives:
+
+- [yantrikdb-server](https://github.com/yantrikos/yantrikdb-server) — the
+  engine this plugin talks to: Rust, self-hosted, HTTP + cluster.
+- [yantrikdb-mcp](https://github.com/yantrikos/yantrikdb-mcp) — the same
+  memory as an MCP server for Claude Code, Cursor and Windsurf.
+- [langchain-yantrikdb](https://github.com/spranab/langchain-yantrikdb) — as a
+  LangChain `VectorStore` and `ChatMessageHistory`.
+- [yantrik-memory](https://github.com/yantrikos/yantrik-memory) —
+  framework-agnostic Python memory layer built on the same engine.
+- [yantrikdb-hermes-plugin](https://github.com/yantrikos/yantrikdb-hermes-plugin)
+  — memory provider for NousResearch's hermes-agent.
+
 ## License
 
 MIT. The YantrikDB server is licensed separately — see
